@@ -1,30 +1,31 @@
 from rest_framework import serializers
-from watchlist_app.models import Movie
+from watchlist_app.models import WatchList, StreamPlatform
 
 
-class MovieSerializer(serializers.ModelSerializer):
+class WatchListSerializer(serializers.ModelSerializer):
     len_of_title = serializers.SerializerMethodField()
 
     class Meta:
-        model = Movie
+        model = WatchList
         fields = '__all__'
         # fields = ['id', 'title', 'description']
         # exclude = ['active'] # fields or exclude - not possible use both
 
-    def get_len_of_title(self, object):  # get_ a potem nazwa pola
+    def get_len_of_title(self, object):  # get_ a potem nazwa pola- tutaj tworzymy wartosć dla SerializerMethodField()
         return len(object.title)
+    #
+    # ##Vaidators must be addded as functions
+    # def validate_title(self, value):  # musi zaczynać się od validate_ a potem pole
+    #     if len(value) < 2:
+    #         raise serializers.ValidationError("Name is to short!")
+    #     else:
+    #         return value
+    #
+    # def validate(self, data):  # cały klasa
+    #     if data['title'] == data['description']:
+    #         raise serializers.ValidationError("Title and description can't be the same")
+    #     return data
 
-    ##Vaidators must be addded as functions
-    def validate_title(self, value):  # musi zaczynać się od validate_ a potem pole
-        if len(value) < 2:
-            raise serializers.ValidationError("Name is to short!")
-        else:
-            return value
-
-    def validate(self, data):  # cały klasa
-        if data['title'] == data['description']:
-            raise serializers.ValidationError("Title and description can't be the same")
-        return data
 
 #
 # def title_length(value):
@@ -60,3 +61,9 @@ class MovieSerializer(serializers.ModelSerializer):
 #     if data['title'] == data['description']:
 #         raise serializers.ValidationError("Title and description can't be the same")
 #     return data
+
+
+class StreamPlatformSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StreamPlatform
+        fields = '__all__'
