@@ -3,11 +3,12 @@ from watchlist_app.models import WatchList, StreamPlatform, Review
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Review
-        #fields = '__all__'
-        exclude = ['watchlist',] # dlatego tak, że chcemy tworzyć komentarz po wejsciu juz w konkt=retny film
+        # fields = '__all__'
+        exclude = ['watchlist', ]  # dlatego tak, że chcemy tworzyć komentarz po wejsciu juz w konkretny film
 
 
 class WatchListSerializer(serializers.ModelSerializer):
@@ -76,6 +77,7 @@ class WatchListSerializer(serializers.ModelSerializer):
 class StreamPlatformSerializer(serializers.ModelSerializer):
     # poniżej ultraważne nazwa musi być taka sama jak w related_name
     watchlist = WatchListSerializer(many=True, read_only=True)  # watchlist bo tak nazwaliśmy related_name w modelu!!!
+
     # watchlist = serializers.StringRelatedField(many=True) # shows only what is in __str__ in models.py
     # watchlist = serializers.PrimaryKeyRelatedField(many=True, read_only=True) # shows primary key of movies
     # Żeby użyć pniższego należy w views.py dodać w StreamPlatformListView context={'request': request}

@@ -1,3 +1,4 @@
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework import status
 from watchlist_app.models import WatchList, StreamPlatform, Review
@@ -5,6 +6,7 @@ from watchlist_app.api.serializers import WatchListSerializer, StreamPlatformSer
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework import mixins, generics
+from rest_framework.exceptions import ValidationError
 
 
 # @api_view(['GET', 'POST'])
@@ -50,11 +52,17 @@ from rest_framework import mixins, generics
 
 class ReviewCreate(generics.CreateAPIView):
     serializer_class = ReviewSerializer
+    queryset = Review.objects.all()
+
 
     def perform_create(self, serializer):
         pk = self.kwargs.get('pk')
         watchlist = WatchList.objects.get(pk=pk)
-        serializer.save(watchlist=watchlist)
+        author = self.request.user # pobiera pytającego usera
+        author_queryset = Review.objects.filter(watchlist=watchlist, author=author)
+        if author_queryset: # lub if quthor_queryset.exists()
+            raise ValidationError("You have already reviewed this watch!")
+        serializer.save(watchlist=watchlist, author=author)
 
 
 # poniżej usuniemy klasę Create, bo może rodzić to błędy, gdy będzie dodawany nowy review i moglby zostac wpisace inne id watchlist
@@ -62,6 +70,7 @@ class ReviewList(generics.ListAPIView):
     # normalnie by wystarczył ale my chceby do id fimu wyświetlać wszystkie reviews dla niego
     # queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         pk = self.kwargs['pk']
@@ -71,6 +80,7 @@ class ReviewList(generics.ListAPIView):
 class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticated]
 
 
 # class ReviewList(mixins.ListModelMixin,
@@ -176,7 +186,7 @@ class StreamPlatformDetailsAV(APIView):
 
     def put(self, request, pk):
         stream_platform = StreamPlatform.objects.get(pk=pk)
-        serializer = StreamPlatformSerializer(stream_platform)
+        serializer = StreamPlatformSerializer(stream_platform, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
