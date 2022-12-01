@@ -19,5 +19,6 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('watch/', include('watchlist_app.api.urls')),
-    path('api_auth/', include('rest_framework.urls')), # wystarczy użyć takiego urla, żeby była możliwość logowania(podstawowa)
+    path('account/', include('user_app.api.urls')),
+    # path('api_auth/', include('rest_framework.urls')), # wystarczy użyć takiego urla, żeby była możliwość logowania(podstawowa)
 ]

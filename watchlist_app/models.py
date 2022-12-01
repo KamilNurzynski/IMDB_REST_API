@@ -17,6 +17,8 @@ class WatchList(models.Model):
     storyline = models.TextField()
     stream_platform = models.ForeignKey(StreamPlatform, on_delete=models.CASCADE, related_name='watchlist')
     active = models.BooleanField(default=True)
+    avg_rating = models.FloatField(default=0) # unikamy w ten sposób błędu przy migracji
+    number_of_ratings = models.IntegerField(default=0)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
