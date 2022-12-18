@@ -1,13 +1,19 @@
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle, ScopedRateThrottle
+from watchlist_app.api.throttling import ReviewListThrottle, ReviewCreateThrottle
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
+from watchlist_app.api.pagination import WatchListPagination, WatchListWithLimitOffsetPagination, \
+    WatchListCursorPagination
 from watchlist_app.models import WatchList, StreamPlatform, Review
 from watchlist_app.api.serializers import WatchListSerializer, StreamPlatformSerializer, ReviewSerializer
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework import mixins, generics
 from rest_framework.exceptions import ValidationError
-from watchlist_app.api.permissions import AdminOrReadOnly, ReviewUserOrReadOnly
+from watchlist_app.api.permissions import IsAdminOrReadOnly, IsReviewUserOrReadOnly
 
 
 # @api_view(['GET', 'POST'])
@@ -50,10 +56,32 @@ from watchlist_app.api.permissions import AdminOrReadOnly, ReviewUserOrReadOnly
 #         movie.delete()
 #         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class UserReview(generics.ListAPIView):
+    serializer_class = ReviewSerializer
+
+    # def get_queryset(self):
+    #     username = self.kwargs['username'] # pobiera z adresu url
+    #     return Review.objects.filter(author__username=username)
+
+    """
+    przez użycie query_params.get() url będzie wyglądał tak: 
+    path('reviews/', views.UserReview.as_view(), name='user_review_details')
+    """
+
+    def get_queryset(self):
+        # inna metoda pobierania danych z url(jeśli nie ma to None)
+        username = self.request.query_params.get('username', None)
+        return Review.objects.filter(author__username=username)
+        # if username is not None:
+        #     queryset = queryset.filter(author__username=username)
+        # return queryset
+
 
 class ReviewCreate(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = ReviewSerializer
     queryset = Review.objects.all()
+    throttle_classes = [ReviewCreateThrottle]
 
     def perform_create(self, serializer):
         pk = self.kwargs.get('pk')
@@ -63,7 +91,7 @@ class ReviewCreate(generics.CreateAPIView):
         if author_queryset:  # lub if quthor_queryset.exists()
             raise ValidationError("You have already reviewed this watch!")
         if watchlist.number_of_ratings == 0:
-            watchlist.avg_rating = serializer.validated_data['rating']# wprowadzana dana
+            watchlist.avg_rating = serializer.validated_data['rating']  # wprowadzana dana
         else:
             watchlist.avg_rating = (watchlist.avg_rating + serializer.validated_data['rating']) / 2
         watchlist.number_of_ratings += 1
@@ -71,23 +99,34 @@ class ReviewCreate(generics.CreateAPIView):
         serializer.save(watchlist=watchlist, author=author)
 
 
-# poniżej usuniemy klasę Create, bo może rodzić to błędy, gdy będzie dodawany nowy review i moglby zostac wpisace inne id watchlist
+# poniżej usuniemy klasę Create, bo może rodzić to błędy,
+#  gdy będzie dodawany nowy review i moglby zostac wpisace inne id watchlist
 class ReviewList(generics.ListAPIView):
-    # normalnie by wystarczył ale my chceby do id fimu wyświetlać wszystkie reviews dla niego
+    # normalnie by wystarczył ale my chcemy do id fimu wyświetlać wszystkie reviews dla niego
     # queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    # throttle_classes = [UserRateThrottle, AnonRateThrottle]
+    throttle_classes = [ReviewListThrottle]
+
     # permission_classes = [IsAuthenticatedOrReadOnly]
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['author__username', 'active']
 
     def get_queryset(self):
         pk = self.kwargs['pk']
-        return Review.objects.filter(watchlist=pk) # or watchlist_id=pk
+        return Review.objects.filter(watchlist=pk)  # or watchlist_id=pk
 
 
 class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = [ReviewUserOrReadOnly]
+    permission_classes = [IsReviewUserOrReadOnly]
+    # throttle_classes = [UserRateThrottle, AnonRateThrottle]
+    # poniżej działą podobnie jak custom throttle classes ale nie trzeba tworzyć nowego pliku throttling.py
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'review-detail'  # działą z importowanym ScopedRateThrottle.
 
 
 # class ReviewList(mixins.ListModelMixin,
@@ -120,7 +159,30 @@ class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
 #         return self.destroy(request, *args, **kwargs)
 
 
+class WatchListView(generics.ListAPIView):
+    # normalnie by wystarczył ale my chcemy do id fimu wyświetlać wszystkie reviews dla niego
+    queryset = WatchList.objects.all()
+    serializer_class = WatchListSerializer
+
+    # pagination_class = WatchListPagination
+    # pagination_class = WatchListWithLimitOffsetPagination
+    pagination_class = WatchListCursorPagination
+
+    # w url:  ?search=
+    # filter_backends = [filters.SearchFilter]  ## search nie patrzy na wielkosc liter i na spacje
+    # search_fields = ['^title', 'stream_platform__name']  # ^title - title startswith...
+    # w url:   ?ordering=
+    # filter_backends = [filters.OrderingFilter]
+    # ordering_fields = ['avg_rating']  # w URL:
+
+    # w url:   ?title=coś&stream_platform=coś
+    # filter_backends = [DjangoFilterBackend]
+    # filterset_fields = ['title', 'stream_platform__name']  # nie trzeba wszystkich wpisywać w URL
+
+
 class WatchListAV(APIView):
+    permission_classes = [IsAdminOrReadOnly]
+
     def get(self, request):
         try:
             movies = WatchList.objects.all()
@@ -139,6 +201,8 @@ class WatchListAV(APIView):
 
 
 class WatchListDetailsAV(APIView):
+    permission_classes = [IsAdminOrReadOnly]
+
     def get(self, request, pk):
         try:
             movie = WatchList.objects.get(pk=pk)
@@ -163,6 +227,8 @@ class WatchListDetailsAV(APIView):
 
 
 class StreamPlatformListAV(APIView):
+    permission_classes = [IsAdminOrReadOnly]
+
     def get(self, request):
         try:
             stream_platforms = StreamPlatform.objects.all()
@@ -183,6 +249,8 @@ class StreamPlatformListAV(APIView):
 
 
 class StreamPlatformDetailsAV(APIView):
+    permission_classes = [IsAdminOrReadOnly]
+
     def get(self, request, pk):
         try:
             stream_platform = StreamPlatform.objects.get(pk=pk)

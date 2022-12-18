@@ -13,12 +13,13 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('watch/', include('watchlist_app.api.urls')),
-    path('account/', include('user_app.api.urls')),
+    path('dashboard/', admin.site.urls),
+    path('api/watch/', include('watchlist_app.api.urls')),
+    path('api/account/', include('user_app.api.urls')),
     # path('api_auth/', include('rest_framework.urls')), # wystarczy użyć takiego urla, żeby była możliwość logowania(podstawowa)
 ]

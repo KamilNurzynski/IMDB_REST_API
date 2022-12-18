@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 from decouple import config
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'user_app',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -132,9 +134,46 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # }
 
 
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         # 'rest_framework.authentication.BasicAuthentication',
+#         ' ',
+#     ]
+# }
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        # 'rest_framework.authentication.BasicAuthentication',
+
+    'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
-    ]
+        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    # wystarczy ponżej tak zapisać, żeby było globalnie w całym projekcie. Jeśli zakomentujemy poniższe 3 wersy
+    # to możemy przydzielać lokalny throttling
+    # 'DEFAULT_THROTTLE_CLASSES': [
+    #     'rest_framework.throttling.AnonRateThrottle',
+    #     'rest_framework.throttling.UserRateThrottle'
+    # ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '1/day',
+        'user': '3/day',
+        'review-create': '5/day',
+        'review-list': '10/day',
+        'review-detail': '2/day'
+    },
+
+    # poniżej globalna paginacja
+    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    # 'PAGE_SIZE': 5,
+
+    # below is method to disable brwoserable looking api. It makes JSON API in commercial standard.
+    # API komercyjne to sam json- bez klikadełek
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+    )
 }
+
+# dzieki temu po wysyłaniu refresha  bedziemy dostawać nie tylko nowy access ale też nowy refresh
+# SIMPLE_JWT = {
+#     'ROTATE_REFRESH_TOKENS': True,
+#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+# }
