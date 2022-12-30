@@ -13,7 +13,7 @@ class StreamPlatformTestCase(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='example', password='Gladorota2')
         self.token = Token.objects.get(user__username=self.user)
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)  # ze strony django rest-framework
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
         self.stream_platform = StreamPlatform.objects.create(name='Fiutflix', about='Bardzo galante filmy',
                                                              website="http://netflix.com")
 
@@ -49,7 +49,7 @@ class WatchListTestCase(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='example', password='Gladorota2')
         self.token = Token.objects.get(user__username=self.user)
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)  # ze strony django rest-framework
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
         self.stream_platform = StreamPlatform.objects.create(name='Fiutflix', about='Bardzo galante filmy',
                                                              website="http://netflix.com")
         self.watch = WatchList.objects.create(title='Nossolar', storyline='about sth',
@@ -81,7 +81,7 @@ class ReviewCreateTestCase(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='example', password='Gladorota2')
         self.token = Token.objects.get(user__username=self.user)
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)  # ze strony django rest-framework
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
         self.stream_platform = StreamPlatform.objects.create(name='Fiutflix', about='Bardzo galante filmy',
                                                              website="http://netflix.com")
         self.watch = WatchList.objects.create(title='Nossolar', storyline='about sth',
@@ -105,7 +105,6 @@ class ReviewCreateTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Review.objects.get(pk=1).rating, 5)
         self.assertEqual(Review.objects.count(), 2)
-        # poniżej proba ponownego utworzenia i bad request
         response = self.client.post(reverse('review_create', args=(self.watch.id,)), data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 

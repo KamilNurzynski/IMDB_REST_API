@@ -6,7 +6,7 @@ In this file are custom throttling classes.
 
 
 class ReviewCreateThrottle(UserRateThrottle):
-    scope = 'review-create'  # tutaj piszemy nazwę, której użyjemy w settings.
+    scope = 'review-create'
 
 
 class ReviewListThrottle(UserRateThrottle):

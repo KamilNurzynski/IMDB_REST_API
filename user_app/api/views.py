@@ -22,16 +22,8 @@ def registration_view(request):
             data['response'] = "Registration Succesful!"
             data['username'] = account.username
             data['email'] = account.email
-            # poniższa część jest używana razem z rest_framework.authentication.TokenAuthentication
-            token = Token.objects.get(user=account).key  # można użyć tutaj  metody get_or_create()
+            token = Token.objects.get(user=account).key
             data['token'] = token
-
-            # poniższa część przy użyciu metody JWT (creating token manyally)
-            # refresh = RefreshToken.for_user(account)
-            # data['token'] = {
-            #     'refresh': str(refresh),
-            #     'access': str(refresh.access_token),
-            # }
         else:
             data = serializer.errors
         return Response(data, status.HTTP_201_CREATED)
@@ -40,5 +32,5 @@ def registration_view(request):
 @api_view(['POST', ])
 def logout_view(request):
     if request.method == 'POST':
-        request.user.auth_token.delete()  # usuwamy token
+        request.user.auth_token.delete()
         return Response(status=status.HTTP_200_OK)

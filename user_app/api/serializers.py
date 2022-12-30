@@ -3,7 +3,6 @@ from rest_framework import serializers
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
-    # zobacz w panelu admina- hasło zhaszhowane + sól dlatego nie da się go rozczytać. da się tylko wpisać.
     password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True)
 
     class Meta:
@@ -13,7 +12,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
             'password': {'write_only': True}
         }
 
-    # musimy nadpisać, bo nie ma pola password2
     def save(self):
         password = self.validated_data['password']
         password2 = self.validated_data['password2']
