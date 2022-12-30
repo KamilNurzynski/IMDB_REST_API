@@ -1,2 +1,2 @@
 # IMDB_REST_API
-it is a clone of IMDB service.
+It is a clone of IMDB service.
