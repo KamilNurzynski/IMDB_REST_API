@@ -115,7 +115,7 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
- 
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
@@ -126,32 +126,12 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# poniżej globalne permisssions. Brak dostępu do  czegokolwiek. Trzeba być zalogowanym.
-# REST_FRAMEWORK = {
-#     'DEFAULT_PERMISSION_CLASSES': [
-#         'rest_framework.permissions.IsAuthenticated',
-#     ]
-# }
-
-
-# REST_FRAMEWORK = {
-#     'DEFAULT_AUTHENTICATION_CLASSES': [
-#         # 'rest_framework.authentication.BasicAuthentication',
-#         ' ',
-#     ]
-# }
 REST_FRAMEWORK = {
 
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
-        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    # wystarczy ponżej tak zapisać, żeby było globalnie w całym projekcie. Jeśli zakomentujemy poniższe 3 wersy
-    # to możemy przydzielać lokalny throttling
-    # 'DEFAULT_THROTTLE_CLASSES': [
-    #     'rest_framework.throttling.AnonRateThrottle',
-    #     'rest_framework.throttling.UserRateThrottle'
-    # ],
+
     'DEFAULT_THROTTLE_RATES': {
         'anon': '1/day',
         'user': '3/day',
@@ -160,20 +140,7 @@ REST_FRAMEWORK = {
         'review-detail': '2/day'
     },
 
-    # poniżej globalna paginacja
-    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    # 'PAGE_SIZE': 5,
-
-    # below is method to disable brwoserable looking api. It makes JSON API in commercial standard.
-    # API komercyjne to sam json- bez klikadełek
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
     )
 }
-
-# dzieki temu po wysyłaniu refresha  bedziemy dostawać nie tylko nowy access ale też nowy refresh
-# SIMPLE_JWT = {
-#     'ROTATE_REFRESH_TOKENS': True,
-#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
-#     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
-# }
